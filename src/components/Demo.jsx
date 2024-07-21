@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { copy, linkIcon, loader, tick } from "../assets";
 import { useLazyGetSummaryQuery } from "../services/article";
 
-
 const Demo = () => {
   const [article, setArticle] = useState({
     url: "",
@@ -32,21 +31,34 @@ const Demo = () => {
     if (existingArticle) return setArticle(existingArticle);
 
     const { data } = await getSummary({
-      articleUrl: article.url,
+      articleUrl: article.url
     });
 
     if (data?.summary) {
       const newArticle = {
         ...article,
-        summary: data.summary,
+        summary: data.summary
       };
       const updatedAllarticles = [newArticle, ...allArticles];
       setArticle(newArticle);
       setAllArticles(updatedAllarticles);
 
-      localStorage.setItem("article", JSON.stringify(updatedAllarticles));
+      localStorage.setItem("articles", JSON.stringify(updatedAllarticles));
     }
   };
+
+  const handleCopy = (copyUrl) => {
+    setCopied(copyUrl);
+    navigator.clipboard.writeText(copyUrl);
+    setTimeout(() => setCopied(false), 3000);
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.keyCode === 13) {
+      handleSubmit(e);
+    }
+  };
+
   return (
     <section className="mt-16 w-full max-w-full">
       {/* Search */}
@@ -64,6 +76,7 @@ const Demo = () => {
             type="url"
             placeholder="Enter a URL"
             value={article.url}
+            onKeyDown={handleKeyDown}
             onChange={(e) => setArticle({ ...article, url: e.target.value })}
             required
             className="url_input peer"
@@ -72,21 +85,21 @@ const Demo = () => {
             type="submit"
             className="submit_btn peer-focus:border-gray-700 peer-focus:text-gray-700"
           >
-            ↵
+            <p>↵</p>
           </button>
         </form>
         {/* Browse URL History */}
         <div className="flex flex-col gap-1 max-h-60 overflow-y-auto">
-          {allArticles.map((item, index) => (
+          {allArticles.reverse().map((item, index) => (
             <div
               key={`link-${index}`}
               onClick={() => setArticle(item)}
               className="link_card"
             >
-              <div className="copy_btn">
+              <div className="copy_btn" onClick={() => handleCopy(item.url)}>
                 <img
-                  src={copy}
-                  alt="copy_icon"
+                  src={copied === item.url ? tick : copy}
+                  alt={copied === item.url ? "tick_icon" : "copy_icon"}
                   className="w-[40%] h-[40%] object-contain"
                 />
               </div>
@@ -113,8 +126,11 @@ const Demo = () => {
           article.summary && (
             <div className="flex flex-col gap-3">
               <h2 className="font-satoshi font-bold text-gray-600 text-xl">
-              Article<span className="blue_gradient">Summary</span></h2>
-              <p className="font-inter font-medium text-sm text-gray-700">{article.summary}</p>
+                Article<span className="blue_gradient">Summary</span>
+              </h2>
+              <p className="font-inter font-medium text-sm text-gray-700">
+                {article.summary}
+              </p>
             </div>
           )
         )}
